@@ -15,6 +15,15 @@
 
   <main>
     {{ content }}
+
+    <section>
+      <h2>사진 업로드</h2>
+      <form id="upload-form">
+        <input type="file" id="image-input" accept="image/*">
+        <br><br>
+        <img id="preview" src="#" alt="미리보기" style="display:none; max-width:300px; border:1px solid #ccc; padding:5px;">
+      </form>
+    </section>
   </main>
 
   <footer>
@@ -24,5 +33,22 @@
       {% endfor %}
     </ul>
   </footer>
+
+  <script>
+    const input = document.getElementById('image-input');
+    const preview = document.getElementById('preview');
+
+    input.addEventListener('change', function() {
+      const file = this.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          preview.src = e.target.result;
+          preview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  </script>
 </body>
 </html>
