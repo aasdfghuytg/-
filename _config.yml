@@ -1,1 +1,17 @@
-theme: Chirpy
+# _config.yml
+
+title: My Chirpy Theme
+description: A modern and minimal Jekyll theme inspired by Chirpy
+author: Your Name
+baseurl: ""  # Base URL, leave empty for root
+url: "https://your-username.github.io" # Replace with your actual URL
+theme: minima  # You can also use a custom theme here
+
+# Social media links
+social_links:
+  - name: "github"
+    url: "https://github.com/your-username"
+  - name: "twitter"
+    url: "https://twitter.com/your-username"
+  - name: "linkedin"
+    url: "https://linkedin.com/in/your-username"
