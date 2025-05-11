@@ -1,17 +1,28 @@
-# _config.yml
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="{{ site.description }}">
+  <title>{{ site.title }}</title>
+  <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}">
+</head>
+<body>
+  <header>
+    <h1>{{ site.title }}</h1>
+    <p>{{ site.description }}</p>
+  </header>
 
-title: My Chirpy Theme
-description: A modern and minimal Jekyll theme inspired by Chirpy
-author: Your Name
-baseurl: ""  # Base URL, leave empty for root
-url: "https://your-username.github.io" # Replace with your actual URL
-theme: minima  # You can also use a custom theme here
+  <main>
+    {{ content }}
+  </main>
 
-# Social media links
-social_links:
-  - name: "github"
-    url: "https://github.com/your-username"
-  - name: "twitter"
-    url: "https://twitter.com/your-username"
-  - name: "linkedin"
-    url: "https://linkedin.com/in/your-username"
+  <footer>
+    <ul>
+      {% for link in site.social_links %}
+        <li><a href="{{ link.url }}" target="_blank">{{ link.name }}</a></li>
+      {% endfor %}
+    </ul>
+  </footer>
+</body>
+</html>
