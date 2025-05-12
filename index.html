@@ -1,77 +1,122 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>포트폴리오</title>
   <style>
     body {
       font-family: sans-serif;
-      background: #fff;
+      background: #f4f4f4;
       color: #111;
-      max-width: 800px;
+      max-width: 900px;
       margin: 40px auto;
       padding: 0 20px;
     }
     h1 {
-      font-size: 2.5em;
       text-align: center;
     }
-    h2 {
-      margin-top: 40px;
-      font-size: 1.5em;
-    }
     form {
-      margin-top: 20px;
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
     }
-    #preview-container {
+    input, textarea {
+      width: 100%;
+      margin: 10px 0;
+      padding: 10px;
+      font-size: 1em;
+    }
+    .card-container {
       display: flex;
       flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 20px;
+      gap: 20px;
+      justify-content: flex-start;
     }
-    #preview-container img {
-      max-width: 150px;
-      border: 1px solid #ccc;
-      padding: 5px;
-      background: #f9f9f9;
+    .card {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      width: 250px;
+      padding: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
-    hr {
-      margin: 40px 0;
+    .card img {
+      max-width: 100%;
+      border-radius: 4px;
+      margin-bottom: 10px;
+    }
+    .card h3 {
+      margin: 5px 0;
+    }
+    .card p {
+      font-size: 0.9em;
     }
   </style>
 </head>
 <body>
 
   <h1>포트폴리오</h1>
-  <p style="text-align:center;">나의 개인 포트폴리오 사이트</p>
-  <hr>
 
-  <h2>사진 여러 장 업로드</h2>
   <form id="upload-form">
-    <input type="file" id="image-input" accept="image/*" multiple>
-    <div id="preview-container"></div>
+    <input type="file" id="image-input" accept="image/*">
+    <input type="text" id="title-input" placeholder="제목 입력" />
+    <textarea id="content-input" rows="3" placeholder="내용 입력"></textarea>
+    <button type="submit">추가하기</button>
   </form>
 
+  <div class="card-container" id="card-container"></div>
+
   <script>
-    const input = document.getElementById('image-input');
-    const previewContainer = document.getElementById('preview-container');
+    const form = document.getElementById('upload-form');
+    const imageInput = document.getElementById('image-input');
+    const titleInput = document.getElementById('title-input');
+    const contentInput = document.getElementById('content-input');
+    const cardContainer = document.getElementById('card-container');
 
-    input.addEventListener('change', function () {
-      previewContainer.innerHTML = '';
-      const files = this.files;
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
 
-      Array.from(files).forEach(file => {
-        if (!file.type.startsWith('image/')) return;
+      const title = titleInput.value.trim();
+      const content = contentInput.value.trim();
+      const file = imageInput.files[0];
 
+      const card = document.createElement('div');
+      card.className = 'card';
+
+      if (file && file.type.startsWith('image/')) {
         const reader = new FileReader();
         reader.onload = function (e) {
           const img = document.createElement('img');
           img.src = e.target.result;
-          previewContainer.appendChild(img);
+          card.appendChild(img);
+          addText();
         };
         reader.readAsDataURL(file);
-      });
+      } else {
+        addText();
+      }
+
+      function addText() {
+        if (title) {
+          const h3 = document.createElement('h3');
+          h3.textContent = title;
+          card.appendChild(h3);
+        }
+        if (content) {
+          const p = document.createElement('p');
+          p.textContent = content;
+          card.appendChild(p);
+        }
+        cardContainer.appendChild(card);
+
+        // 입력 초기화
+        titleInput.value = '';
+        contentInput.value = '';
+        imageInput.value = '';
+      }
     });
   </script>
 
