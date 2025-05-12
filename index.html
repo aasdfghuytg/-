@@ -42,6 +42,7 @@
       width: 250px;
       padding: 10px;
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      position: relative;
     }
     .card img {
       max-width: 100%;
@@ -54,6 +55,16 @@
     .card p {
       font-size: 0.9em;
     }
+    .edit-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      cursor: pointer;
+      background: #eee;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.8em;
+    }
   </style>
 </head>
 <body>
@@ -62,8 +73,10 @@
 
   <form id="upload-form">
     <input type="file" id="image-input" accept="image/*">
+    <input type="text" id="category-input" placeholder="카테고리 입력" />
     <input type="text" id="title-input" placeholder="제목 입력" />
     <textarea id="content-input" rows="3" placeholder="내용 입력"></textarea>
+    <input type="password" id="secret-input" placeholder="비밀키 (수정용)" />
     <button type="submit">추가하기</button>
   </form>
 
@@ -72,52 +85,88 @@
   <script>
     const form = document.getElementById('upload-form');
     const imageInput = document.getElementById('image-input');
+    const categoryInput = document.getElementById('category-input');
     const titleInput = document.getElementById('title-input');
     const contentInput = document.getElementById('content-input');
+    const secretInput = document.getElementById('secret-input');
     const cardContainer = document.getElementById('card-container');
+    const STORAGE_KEY = 'portfolio_cards';
+
+    let cards = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    renderCards();
 
     form.addEventListener('submit', function (e) {
       e.preventDefault();
 
       const title = titleInput.value.trim();
       const content = contentInput.value.trim();
+      const category = categoryInput.value.trim();
+      const secret = secretInput.value.trim();
       const file = imageInput.files[0];
 
-      const card = document.createElement('div');
-      card.className = 'card';
+      if (!title || !secret) return;
 
-      if (file && file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onload = function (e) {
-          const img = document.createElement('img');
-          img.src = e.target.result;
-          card.appendChild(img);
-          addText();
-        };
-        reader.readAsDataURL(file);
-      } else {
-        addText();
-      }
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const imageData = file ? e.target.result : '';
+        const newCard = { title, content, category, imageData, secret };
+        cards.push(newCard);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
+        renderCards();
+        form.reset();
+      };
 
-      function addText() {
-        if (title) {
-          const h3 = document.createElement('h3');
-          h3.textContent = title;
-          card.appendChild(h3);
-        }
-        if (content) {
-          const p = document.createElement('p');
-          p.textContent = content;
-          card.appendChild(p);
-        }
-        cardContainer.appendChild(card);
-
-        // 입력 초기화
-        titleInput.value = '';
-        contentInput.value = '';
-        imageInput.value = '';
-      }
+      if (file) reader.readAsDataURL(file);
+      else reader.onload();
     });
+
+    function renderCards() {
+      cardContainer.innerHTML = '';
+      cards.forEach((card, index) => {
+        const div = document.createElement('div');
+        div.className = 'card';
+
+        if (card.imageData) {
+          const img = document.createElement('img');
+          img.src = card.imageData;
+          div.appendChild(img);
+        }
+
+        const h3 = document.createElement('h3');
+        h3.textContent = card.title;
+        div.appendChild(h3);
+
+        if (card.category) {
+          const cat = document.createElement('p');
+          cat.innerHTML = `<strong>카테고리:</strong> ${card.category}`;
+          div.appendChild(cat);
+        }
+
+        const p = document.createElement('p');
+        p.textContent = card.content;
+        div.appendChild(p);
+
+        const editBtn = document.createElement('div');
+        editBtn.textContent = '✏️';
+        editBtn.className = 'edit-btn';
+        editBtn.addEventListener('click', () => {
+          const input = prompt('비밀키를 입력하세요:');
+          if (input === card.secret) {
+            const newTitle = prompt('제목 수정:', card.title) || card.title;
+            const newContent = prompt('내용 수정:', card.content) || card.content;
+            cards[index].title = newTitle;
+            cards[index].content = newContent;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
+            renderCards();
+          } else {
+            alert('비밀키가 틀렸습니다.');
+          }
+        });
+        div.appendChild(editBtn);
+
+        cardContainer.appendChild(div);
+      });
+    }
   </script>
 
 </body>
