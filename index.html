@@ -3,124 +3,153 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>나의 개인 포트폴리오 사이트</title>
+  <title>나의 포트폴리오</title>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background: #1c1c1c;
-      color: #eee;
+      background: #121212;
+      color: #ffffff;
       max-width: 1000px;
-      margin: 0 auto;
-      padding: 40px 20px;
+      margin: 40px auto;
+      padding: 0 20px;
     }
-
     h1 {
       text-align: center;
-      font-size: 2em;
-      margin-bottom: 30px;
-      font-weight: bold;
+      font-size: 2.5em;
+      margin-bottom: 20px;
     }
-
     form {
-      background: #2a2a2a;
+      background: #1f1f1f;
       padding: 20px;
       border-radius: 16px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.3);
+      box-shadow: 0 0 10px rgba(0, 200, 255, 0.1);
       margin-bottom: 40px;
     }
-
-    input, textarea {
+    input[type="text"],
+    input[type="password"],
+    textarea {
       width: 100%;
       margin: 10px 0;
       padding: 12px;
       font-size: 1em;
-      background: #1e1e1e;
+      background: #2a2a2a;
       border: 1px solid #444;
       color: #fff;
       border-radius: 8px;
     }
 
-    input[type="file"] {
-      background: none;
-      border: none;
+    /* 커스텀 파일 업로드 */
+    .file-upload {
+      position: relative;
+      overflow: hidden;
+      display: inline-block;
+      margin-bottom: 10px;
+    }
+    .file-upload input[type="file"] {
+      position: absolute;
+      font-size: 100px;
+      opacity: 0;
+      right: 0;
+      top: 0;
+    }
+    .file-upload-label {
+      background-color: #2a2a2a;
       color: #ccc;
+      padding: 10px 20px;
+      border-radius: 8px;
+      border: 1px solid #444;
+      cursor: pointer;
+      display: inline-block;
     }
 
     button {
-      background: #444;
-      color: #fff;
+      width: 100%;
+      padding: 12px;
+      font-size: 1em;
+      background: #0097a7;
+      color: white;
       border: none;
-      padding: 12px 20px;
-      border-radius: 10px;
+      border-radius: 8px;
       cursor: pointer;
-      transition: background 0.3s;
+      transition: 0.2s;
     }
-
     button:hover {
-      background: #666;
+      background: #00bcd4;
     }
 
     .card-container {
       display: flex;
       flex-wrap: wrap;
-      gap: 20px;
       justify-content: center;
+      gap: 30px;
     }
 
     .card {
-      background: #2a2a2a;
-      border: 1px solid #333;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 12px;
-      width: 280px;
+      width: 300px;
       padding: 15px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+      box-shadow: 0 0 10px rgba(0, 200, 255, 0.05);
       position: relative;
+      backdrop-filter: blur(10px);
     }
 
     .card img {
       max-width: 100%;
-      border-radius: 8px;
+      border-radius: 6px;
       margin-bottom: 10px;
     }
 
     .card h3 {
       margin: 5px 0;
+      color: #00e0ff;
       font-size: 1.2em;
     }
 
     .card p {
-      font-size: 0.95em;
-      line-height: 1.4;
-    }
-
-    .card-action-btn {
-      position: absolute;
-      right: 10px;
-      padding: 4px 8px;
-      border-radius: 6px;
-      font-size: 0.8em;
-      cursor: pointer;
-      color: #fff;
+      font-size: 0.9em;
+      color: #ddd;
     }
 
     .edit-btn {
+      position: absolute;
       top: 10px;
-      background: #555;
+      right: 10px;
+      background: #2a2a2a;
+      color: #fff;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 0.8em;
+      border: 1px solid #555;
+      cursor: pointer;
     }
 
     .delete-btn {
-      top: 40px;
-      background: #ff4d4d;
-      border: 1px solid #cc0000;
+      position: absolute;
+      top: 45px;
+      right: 10px;
+      background: #ff4444;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 0.8em;
+      border: none;
+      cursor: pointer;
     }
+
   </style>
 </head>
 <body>
 
-  <h1>나의 개인 포트폴리오 사이트</h1>
+  <h1>나의 개인 포트폴리오</h1>
 
   <form id="upload-form">
-    <input type="file" id="image-input" accept="image/*">
+    <div class="file-upload">
+      <label class="file-upload-label">파일 선택</label>
+      <input type="file" id="image-input" accept="image/*">
+    </div>
+
     <input type="text" id="category-input" placeholder="카테고리 입력" />
     <input type="text" id="title-input" placeholder="제목 입력" />
     <textarea id="content-input" rows="3" placeholder="내용 입력"></textarea>
@@ -196,7 +225,7 @@
 
         const editBtn = document.createElement('div');
         editBtn.textContent = '✏️';
-        editBtn.className = 'edit-btn card-action-btn';
+        editBtn.className = 'edit-btn';
         editBtn.addEventListener('click', () => {
           const input = prompt('비밀키를 입력하세요:');
           if (input === card.secret) {
@@ -212,17 +241,15 @@
         });
         div.appendChild(editBtn);
 
-        const deleteBtn = document.createElement('div');
+        const deleteBtn = document.createElement('button');
         deleteBtn.textContent = '삭제';
-        deleteBtn.className = 'delete-btn card-action-btn';
+        deleteBtn.className = 'delete-btn';
         deleteBtn.addEventListener('click', () => {
-          const input = prompt('비밀키를 입력하세요:');
+          const input = prompt('비밀키를 입력하세요 (삭제):');
           if (input === card.secret) {
-            if (confirm('정말 삭제하시겠습니까?')) {
-              cards.splice(index, 1);
-              localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
-              renderCards();
-            }
+            cards.splice(index, 1);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
+            renderCards();
           } else {
             alert('비밀키가 틀렸습니다.');
           }
