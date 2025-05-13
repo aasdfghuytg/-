@@ -4,12 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>나의 포트폴리오</title>
-
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
-
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -44,6 +38,7 @@
       border-radius: 8px;
       box-sizing: border-box;
     }
+
     .file-upload {
       position: relative;
       overflow: hidden;
@@ -66,6 +61,7 @@
       cursor: pointer;
       display: inline-block;
     }
+
     button {
       width: 100%;
       padding: 12px;
@@ -80,12 +76,14 @@
     button:hover {
       background: #00bcd4;
     }
+
     .card-container {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
       gap: 30px;
     }
+
     .card {
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid rgba(255, 255, 255, 0.1);
@@ -96,24 +94,44 @@
       position: relative;
       backdrop-filter: blur(10px);
     }
+
     .card img {
       max-width: 100%;
       border-radius: 6px;
       margin-bottom: 10px;
     }
+
     .card h3 {
       margin: 5px 0;
       color: #00e0ff;
       font-size: 1.2em;
     }
+
     .card p {
       font-size: 0.9em;
       color: #ddd;
     }
-    .edit-btn, .delete-btn {
+
+    .edit-btn {
       position: absolute;
+      top: 10px;
       right: 10px;
       background: #2a2a2a;
+      color: #fff;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 0.8em;
+      border: 1px solid #555;
+      cursor: pointer;
+      width: 40px;
+      text-align: center;
+    }
+
+    .delete-btn {
+      position: absolute;
+      top: 45px;
+      right: 10px;
+      background: #ff4444;
       color: white;
       padding: 4px 8px;
       border-radius: 6px;
@@ -123,22 +141,164 @@
       width: 40px;
       text-align: center;
     }
-    .edit-btn {
-      top: 10px;
-    }
-    .delete-btn {
-      top: 45px;
-      background: #ff4444;
-    }
   </style>
 </head>
 <body>
 
-<h1>나의 개인 포트폴리오 사이트</h1>
+  <h1>나의 개인 포트폴리오 사이트</h1>
 
-<form id="upload-form">
-  <div class="file-upload">
-    <label class="file-upload-label">파일 선택</label>
-    <input type="file" id="image-input" accept="image/*">
-  </div>
-  <input type="
+  <form id="upload-form">
+    <div class="file-upload">
+      <label class="file-upload-label">파일 선택</label>
+      <input type="file" id="image-input" accept="image/*">
+    </div>
+
+    <input type="text" id="category-input" placeholder="카테고리 입력" />
+    <input type="text" id="title-input" placeholder="제목 입력" />
+    <textarea id="content-input" rows="3" placeholder="내용 입력"></textarea>
+    <input type="password" id="secret-input" placeholder="비밀키 (수정/삭제용)" />
+    <button type="submit">추가하기</button>
+  </form>
+
+  <div class="card-container" id="card-container"></div>
+
+  <!-- Firebase SDK 추가 -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
+  <script>
+    // Firebase 구성
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    // Firebase 초기화
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    const form = document.getElementById('upload-form');
+    const imageInput = document.getElementById('image-input');
+    const categoryInput = document.getElementById('category-input');
+    const titleInput = document.getElementById('title-input');
+    const contentInput = document.getElementById('content-input');
+    const secretInput = document.getElementById('secret-input');
+    const cardContainer = document.getElementById('card-container');
+    const STORAGE_KEY = 'portfolio_cards';
+
+    let cards = [];
+
+    // Firebase에서 데이터 불러오기
+    function loadCards() {
+      database.ref('cards').once('value', (snapshot) => {
+        const data = snapshot.val();
+        cards = data ? Object.values(data) : [];
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
+        renderCards();
+      });
+    }
+
+    // 초기 로드
+    loadCards();
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      const title = titleInput.value.trim();
+      const content = contentInput.value.trim();
+      const category = categoryInput.value.trim();
+      const secret = secretInput.value.trim();
+      const file = imageInput.files[0];
+
+      if (!title || !secret) return;
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const imageData = file ? e.target.result : '';
+        const newCard = { title, content, category, imageData, secret };
+        const newCardKey = database.ref().child('cards').push().key;
+        const updates = {};
+        updates['/cards/' + newCardKey] = newCard;
+        database.ref().update(updates).then(() => {
+          loadCards();
+          form.reset();
+        });
+      };
+
+      if (file) reader.readAsDataURL(file);
+      else reader.onload();
+    });
+
+    function renderCards() {
+      cardContainer.innerHTML = '';
+      cards.forEach((card, index) => {
+        const div = document.createElement('div');
+        div.className = 'card';
+
+        if (card.imageData) {
+          const img = document.createElement('img');
+          img.src = card.imageData;
+          div.appendChild(img);
+        }
+
+        const h3 = document.createElement('h3');
+        h3.textContent = card.title;
+        div.appendChild(h3);
+
+        if (card.category) {
+          const cat = document.createElement('p');
+          cat.innerHTML = `<strong>카테고리:</strong> ${card.category}`;
+          div.appendChild(cat);
+        }
+
+        const p = document.createElement('p');
+        p.textContent = card.content;
+        div.appendChild(p);
+
+        const editBtn = document.createElement('div');
+        editBtn.textContent = '✏️';
+        editBtn.className = 'edit-btn';
+        editBtn.addEventListener('click', () => {
+          const input = prompt('비밀키를 입력하세요:');
+          if (input === card.secret) {
+            const newTitle = prompt('제목 수정:', card.title) || card.title;
+            const newContent = prompt('내용 수정:', card.content) || card.content;
+            card.title = newTitle;
+            card.content = newContent;
+            const cardKey = Object.keys(cards)[index];
+            database.ref('cards').child(cardKey).update({
+              title: newTitle,
+              content: newContent
+            }).then(() => {
+              loadCards();
+            });
+          } else {
+            alert('비밀키가 틀렸습니다.');
+          }
+        });
+        div.appendChild(editBtn);
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = '삭제';
+        deleteBtn.className = 'delete-btn';
+        deleteBtn.addEventListener('click', () => {
+          const input = prompt('비밀키를 입력하세요 (삭제):');
+          if (input === card.secret) {
+            const cardKey = Object.keys(cards)[index];
+            database.ref('cards').child(cardKey).remove().then(() => {
+              loadCards();
+            });
+          } else {
+            alert('비밀키가 틀렸습니다.');
+          }
+        });
+        div.appendChild(deleteBtn);
+
+        cardContainer.append
+::contentReference[oaicite:8]{index=8}
+ 
