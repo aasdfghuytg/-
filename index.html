@@ -128,10 +128,15 @@
       background: #ff4444;
       color: white;
     }
+    .loading {
+      text-align: center;
+      margin: 20px 0;
+      font-size: 1.2em;
+      color: #00e0ff;
+    }
   </style>
 
   <script>
-    // Firebase 설정
     const firebaseConfig = {
       apiKey: "AIzaSyARqyL-q0Ts8Wqzsq4q_hXb0vQ0vZwW8Os",
       authDomain: "port2-cab83.firebaseapp.com",
@@ -161,6 +166,7 @@
     <button type="submit">추가하기</button>
   </form>
 
+  <div id="loading" class="loading">데이터 로딩 중...</div>
   <div class="card-container" id="card-container"></div>
 
   <script>
@@ -171,17 +177,26 @@
     const contentInput = document.getElementById('content-input');
     const secretInput = document.getElementById('secret-input');
     const cardContainer = document.getElementById('card-container');
+    const loadingElement = document.getElementById('loading');
 
-    const STORAGE_KEY = 'portfolio_cards';
     let cards = [];
+    let dataLoaded = false;
 
-    const saveToLocal = () => {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
+    const generateUniqueId = () => {
+      return Date.now().toString(36) + Math.random().toString(36).substring(2);
     };
 
     const renderCards = () => {
       cardContainer.innerHTML = '';
-      cards.forEach((card, index) => {
+      
+      if (cards.length === 0) {
+        cardContainer.innerHTML = '<p style="text-align: center; width: 100%;">게시물이 없습니다.</p>';
+        return;
+      }
+      
+      const cardsArray = Array.isArray(cards) ? cards : Object.values(cards);
+      
+      cardsArray.forEach((card) => {
         const div = document.createElement('div');
         div.className = 'card';
 
@@ -213,11 +228,23 @@
           if (input === card.secret) {
             const newTitle = prompt('제목 수정:', card.title) || card.title;
             const newContent = prompt('내용 수정:', card.content) || card.content;
-            cards[index].title = newTitle;
-            cards[index].content = newContent;
-            saveToLocal();
-            db.ref('cards').set(cards);
-            renderCards();
+            const newCategory = prompt('카테고리 수정:', card.category) || card.category;
+            
+            const updatedCard = { 
+              ...card, 
+              title: newTitle, 
+              content: newContent, 
+              category: newCategory
+            };
+            
+            db.ref(`cards/${card.id}`).update(updatedCard)
+              .then(() => {
+                alert('수정이 완료되었습니다.');
+              })
+              .catch(error => {
+                console.error('수정 중 오류 발생:', error);
+                alert('수정 중 오류가 발생했습니다.');
+              });
           } else {
             alert('비밀키가 틀렸습니다.');
           }
@@ -230,10 +257,14 @@
         deleteBtn.addEventListener('click', () => {
           const input = prompt('비밀키를 입력하세요 (삭제):');
           if (input === card.secret) {
-            cards.splice(index, 1);
-            saveToLocal();
-            db.ref('cards').set(cards);
-            renderCards();
+            db.ref(`cards/${card.id}`).remove()
+              .then(() => {
+                alert('삭제가 완료되었습니다.');
+              })
+              .catch(error => {
+                console.error('삭제 중 오류 발생:', error);
+                alert('삭제 중 오류가 발생했습니다.');
+              });
           } else {
             alert('비밀키가 틀렸습니다.');
           }
@@ -246,34 +277,106 @@
 
     form.addEventListener('submit', function (e) {
       e.preventDefault();
+      
       const title = titleInput.value.trim();
       const content = contentInput.value.trim();
       const category = categoryInput.value.trim();
       const secret = secretInput.value.trim();
       const file = imageInput.files[0];
 
-      if (!title || !secret) return;
+      if (!title || !content || !secret) {
+        alert('제목, 내용, 비밀키는 필수 입력사항입니다.');
+        return;
+      }
 
-      const reader = new FileReader();
-      reader.onload = function (e) {
-        const imageData = file ? e.target.result : '';
-        const newCard = { title, content, category, imageData, secret };
-        cards.push(newCard);
-        saveToLocal();
-        db.ref('cards').set(cards);
-        renderCards();
-        form.reset();
-      };
+      loadingElement.style.display = 'block';
+      loadingElement.textContent = '게시물 추가 중...';
 
-      if (file) reader.readAsDataURL(file);
-      else reader.onload();
+      const newCardId = generateUniqueId();
+
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const imageData = e.target.result;
+          
+          const newCard = { 
+            id: newCardId,
+            title, 
+            content, 
+            category, 
+            imageData, 
+            secret,
+            timestamp: Date.now()
+          };
+          
+          db.ref(`cards/${newCardId}`).set(newCard)
+            .then(() => {
+              form.reset();
+              loadingElement.style.display = 'none';
+            })
+            .catch(error => {
+              console.error('게시물 추가 중 오류 발생:', error);
+              alert('게시물 추가 중 오류가 발생했습니다.');
+              loadingElement.style.display = 'none';
+            });
+        };
+        reader.readAsDataURL(file);
+      } else {
+        const newCard = { 
+          id: newCardId,
+          title, 
+          content, 
+          category, 
+          imageData: '', 
+          secret,
+          timestamp: Date.now()
+        };
+        
+        db.ref(`cards/${newCardId}`).set(newCard)
+          .then(() => {
+            form.reset();
+            loadingElement.style.display = 'none';
+          })
+          .catch(error => {
+            console.error('게시물 추가 중 오류 발생:', error);
+            alert('게시물 추가 중 오류가 발생했습니다.');
+            loadingElement.style.display = 'none';
+          });
+      }
     });
 
-    // 초기화: Firebase → localStorage → render
     db.ref('cards').on('value', snapshot => {
-      cards = snapshot.val() || [];
-      saveToLocal();
+      loadingElement.style.display = 'block';
+      
+      const data = snapshot.val() || {};
+      cards = data;
+      
+      loadingElement.style.display = 'none';
+      dataLoaded = true;
+      
       renderCards();
+    });
+
+    const connectedRef = db.ref('.info/connected');
+    connectedRef.on('value', (snap) => {
+      if (snap.val() === true) {
+        console.log('Firebase에 연결됨');
+        loadingElement.style.display = 'none';
+      } else {
+        console.log('Firebase에 연결되지 않음');
+        loadingElement.textContent = 'Firebase 서버에 연결 중...';
+        loadingElement.style.display = 'block';
+      }
+    });
+
+    window.addEventListener('load', () => {
+      loadingElement.style.display = 'block';
+      
+      setTimeout(() => {
+        if (!dataLoaded) {
+          loadingElement.textContent = '데이터 로딩 중 문제가 발생했습니다. 페이지를 새로고침해 주세요.';
+        }
+      }, 10000);
     });
   </script>
 
